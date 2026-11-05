@@ -2,9 +2,7 @@
 % В шаблоне нет готового решения и обязательных внешних изображений.
 \reportelement{Введение}
 
-Сформулируйте цель и задачи лабораторной работы. Перечислите используемые
-инструменты; персональные параметры укажите в таблице~\ref{tab:parameters},
-изменив набор строк под своё задание.
+Собрать собственный образ приложения assist-py, уменьшить его размер и добавить проверку здоровья. Для этого нужно описать сборку в Dockerfile, убрать лишние файлы и кэш пакетов, а затем научить Docker проверять, что сервис отвечает. Образ должен запускаться с префиксом manuk на порту 5455.
 
 \begin{table}[H]
   \caption{Персональные параметры}\label{tab:parameters}
@@ -165,7 +163,15 @@ docker ps --filter "name=manuk-assistant-final" --format "table {{.Names}}\t{{.S
 \end{code}
 
 \reportscreenshot{pic/h.png}{Результат работы команд}{fig:h}
+\section{Теги и финальный артефакт}
 
+\begin{code}
+docker build -t manuk-assistant:final -f Dockerfile.optimized .
+docker tag manuk-assistant:final manuk-assistant:1.0.0
+docker tag manuk-assistant:final manuk-assistant:$(date +%Y%m%d)
+\end{code}
+
+\reportscreenshot{pic/t.png}{Защита от копирования}{fig:t}
 \section{Ошибки и анализ результатов}
 
 
@@ -177,28 +183,12 @@ docker ps --filter "name=manuk-assistant-final" --format "table {{.Names}}\t{{.S
 
 \reportscreenshot{pic/he.png}{Неудачный запуск контейнера}{fig:he}
 
+
+
 \reportelement{Заключение}
 
-Сопоставьте результат с целью работы: что проверено, что получилось,
-какие ограничения остались. Замените поясняющий текст собственными выводами.
+Собран собственный образ приложения assist-py, уменьшен его размер и добавлена проверка здоровья. Сборка описана в Dockerfile, лишние файлы и кэш пакетов исключены, Docker проверяет, что сервис отвечает. Образ запускается с префиксом manuk на порту 5455 и получает статус healthy.
 
-% Оставьте только использованные источники и цитируйте их в тексте.
-\begin{thebibliography}{9}
-  \bibitem{docker-docs}
-  Docker Documentation: документация Docker.
-  URL: \url{https://docs.docker.com/}
-  (дата обращения: \today).
-\end{thebibliography}
 
-% Приложение необязательно. Удалите блок, если он не нужен для работы.
-\startreportappendices
-\reportappendix{Дополнительные команды и конфигурации}
 
-Включите объёмные листинги, на которые ссылаетесь в основной части.
-Короткий пример ниже показывает оформление, но не заменяет ваш код.
-
-\begin{code}
-# Свой безопасный пример конфигурации:
-APP_SECRET=REDACTED
-\end{code}
 
