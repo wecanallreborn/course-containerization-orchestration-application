@@ -20,8 +20,7 @@
 \end{table}
 
 Результат хранится в ветке \texttt{lab-\LabNumber} своего форка:
-\url{\RepositoryURL}. Замените адрес на действующий и сохраните коммит
-версии сдачи.
+\url{\RepositoryURL}. 
 
 \chapter{Ход выполнения}
 \section{Первый рабочий образ}
@@ -81,6 +80,27 @@ curl http://localhost:5455/secret/secret25manuk
 
 \reportscreenshot{pic/1.png}{Результат работы команд}{fig:1}
 
+\section{Оптимизация образа}
+
+Для уменьшения размера были уже добавлены следующие строчки в изначальный файл. В новой версии поставим без флага кэша.
+
+\begin{code}
+RUN pip install --no-cache-dir -r requirements.txt
+\end{code}
+
+Проверим насколько флаг влияет на вес образа.
+
+\begin{code}
+docker build -t manuk-assistant:v2 -f Dockerfile.optimized .
+docker images | grep manuk-assistant
+\end{code}
+
+На 12.3MB образ с флагом оказался больше. (рисунок \ref{fig:v12})
+
+\reportscreenshot{pic/v12.png}{Результат работы команд}{fig:v12}
+
+При изменении слоя докер пересобирает все слои с него и ниже по коду (выше по слоям). То есть при изменении любых файлов будут заного переустанавливаться библиотеки из requirements, тк эта команда выполняется после измененного слоя. Копируя отдельно файл, предотвращается эта проблема. Для ранее выполненны теже команды, то в логах CACHED и они не выполняются повторно.  
+
 \section{Выполнение и проверка этапов}
 
 
@@ -102,7 +122,7 @@ curl http://localhost:5455/secret/secret25manuk
   \bibitem{docker-docs}
   Docker Documentation: документация Docker.
   URL: \url{https://docs.docker.com/}
-  (дата обращения: укажите свою дату).
+  (дата обращения: \today).
 \end{thebibliography}
 
 % Приложение необязательно. Удалите блок, если он не нужен для работы.
