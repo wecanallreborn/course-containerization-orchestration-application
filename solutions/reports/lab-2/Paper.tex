@@ -128,6 +128,44 @@ docker build -t manuk-assistant:v3 .
 Файлы гита создают потенциальную опасность из-за хранения всей истории коммитов, при неосторожности: если были закоммичены файлы с чувствительными данными, они останутся там.
 Без .dockerignore выгружаются файлы виртуального окружения, логи, сам Dickerfile (который уже не нужен), файлы гита, а так же секреты .env, что недопустимо.
 
+\section{Healthcheck - готовность к оркестрации}
+
+Добавили в Dockerfile.optimized (добавив и удаленный флаг ). Ставим curl для самопроверки контейнера изнутри (в слим версии этой команды нет), все выполняется одним run для удаления списка пакетов в одном слое, для оптимизации веса также ставятся лишь обязательные пакеты.
+
+\begin{code}
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+CMD curl -f http://localhost:${PORT}/health || exit 1
+\end{code}
+
+Собираем финальный образ и сравниваем вес (рисунок \ref{fig:f}).
+
+
+\begin{code}
+docker build -t manuk-assistant:final -f Dockerfile.optimized .
+docker images | grep manuk-assistant
+\end{code}
+
+\reportscreenshot{pic/f.png}{Результат работы команд}{fig:f}
+
+Проверяем статус, терминальный вывод представлен на рисунке \ref{fig:h}.
+
+\begin{code}
+docker run -d \
+  --name manuk-assistant-final \
+  -p 5455:5455 \
+  -e APP_OWNER=manuk \
+  -e APP_SECRET=secret25manuk \
+  manuk-assistant:final
+sleep 10
+docker ps --filter "name=manuk-assistant-final" --format "table {{.Names}}\t{{.Status}}"
+\end{code}
+
+\reportscreenshot{pic/h.png}{Результат работы команд}{fig:h}
+
 \section{Ошибки и анализ результатов}
 
 
@@ -135,7 +173,9 @@ docker build -t manuk-assistant:v3 .
 
 \reportscreenshot{pic/json-warn.png}{Предупреждение}{fig:j-w}
 
+Запуск финального контейнера с первого раза не состоялся, тк порт держал контейнер из 1 этапа (рисунок \ref{fig:he}). Удалили оба контейнера и перезапустили команды.
 
+\reportscreenshot{pic/he.png}{Неудачный запуск контейнера}{fig:he}
 
 \reportelement{Заключение}
 
