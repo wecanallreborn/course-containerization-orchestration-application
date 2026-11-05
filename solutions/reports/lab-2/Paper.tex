@@ -15,7 +15,7 @@
     Номер ИСУ & \StudentISU\\ \hline
     Персональный порт & 5455\\ \hline
     Персональный префикс & manuk\\ \hline
-    Окружение & -\\ \hline
+    Секретный ключ & secret25manuk\\ \hline
   \end{tabularx}
 \end{table}
 
@@ -24,37 +24,73 @@
 версии сдачи.
 
 \chapter{Ход выполнения}
-\section{Подготовка окружения}
+\section{Первый рабочий образ}
 
-Опишите использованные программы и их версии. Ниже показано оформление
-команд, а не готовый результат; документация Docker приведена как пример
-источника~\cite{docker-docs}.
+Клонировали репозиторий с готовым приложением.
 
 \begin{code}
-# Замените на команды и результаты своего этапа.
-docker version
-docker ps -a
+git clone https://github.com/FilBTi/assist-py solutions/assist-py
+rm -rf solutions/assist-py/.git
+cd solutions/assist-py
 \end{code}
+
+Создали docker файл в корне проекта assist-py. Написали конфигурацию базового образа.
+
+\begin{code}
+FROM python:3.11-slim
+LABEL maintainer="manuk@lab.local"
+LABEL version="1.0"
+WORKDIR /app
+ENV PORT=5455
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY . .
+EXPOSE ${PORT}
+CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT}
+\end{code}
+
+Собираем образ при помощи команды.
+
+\begin{code}
+docker build -t manuk-assistant:v1 .
+\end{code}
+
+
+Запускаем контейнер с переменным окружением и персональными параметрами.
+
+\begin{code}
+docker run -d \
+  --name manuk-assistant-1 \
+  -p 5455:5455 \
+  -e APP_OWNER=manuk \
+  -e APP_SECRET=secret25manuk \
+  manuk-assistant:v1
+\end{code}
+
+Проверяем при помощи команд работоспособность контейнера, созданного по ранее написанному образу. Терминальный вывод представлен на рисунке \ref{fig:1}.
+
+\begin{code}
+curl http://localhost:5455/
+curl http://localhost:5455/me
+curl -X POST http://localhost:5455/notes \
+  -H "Content-Type: application/json" \
+  -d '{"text": "ЛР2: сборка образа"}'
+curl http://localhost:5455/notes
+curl http://localhost:5455/secret/secret25manuk
+\end{code}
+
+\reportscreenshot{pic/1.png}{Результат работы команд}{fig:1}
 
 \section{Выполнение и проверка этапов}
 
-Для каждого этапа приведите действие, наблюдаемый результат и объяснение.
-На рисунке~\ref{fig:proof} показано место для собственного скриншота;
-рамка не является доказательством выполнения работы.
 
-% Добавьте свой файл step-01.png рядом с main.tex или замените путь.
-% Пока файла нет, команда выводит рамку, но сборка продолжает работать.
-\reportscreenshot{step-01.png}{Результат проверки этапа}{fig:proof}
-
-Добавьте разделы по заданию своей лабораторной. Для ЛР №1 включите
-таблицу состояний контейнера и остальные обязательные артефакты;
-не считайте перечень примеров в этом макете полным заданием.
 
 \section{Ошибки и анализ результатов}
 
-Если возникала ошибка, опишите причину, выполненную проверку и исправление.
-Не публикуйте настоящие пароли, токены и приватные ключи; в скриншотах
-оставляйте требуемые заданием логин, хост и время, скрывая реальные секреты.
+
+При сборке первого образа получили предупреждение из-за использования shell формы вместо exec (рисунок \ref{fig:j-w}). Такой синтаксис необходим для правильной подстановки значения порта как переменной.
+
+\reportscreenshot{pic/json-warn.png}{Предупреждение}{fig:j-w}
 
 \reportelement{Заключение}
 

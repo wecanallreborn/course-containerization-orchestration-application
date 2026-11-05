@@ -29,3 +29,5 @@ site/
 *.xdv
 *.synctex.gz
 /materials/report-latex/*.pdf
+
+**/build/
