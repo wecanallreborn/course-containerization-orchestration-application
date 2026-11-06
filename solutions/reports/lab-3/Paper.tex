@@ -11,47 +11,81 @@
     \hline
     Параметр & Значение\\ \hline
     Номер ИСУ & \StudentISU\\ \hline
-    Персональный порт & Рассчитайте по заданию\\ \hline
-    Персональный префикс & Укажите свой префикс\\ \hline
-    Окружение & Укажите ОС и архитектуру\\ \hline
+    Персональный порт & 5455, 8025\\ \hline
+    Персональный префикс & manuk\\ \hline
+    Секретный ключ & secret25manuk\\ \hline
+    Имя баз данных & manuk-postgres\\ \hline
   \end{tabularx}
 \end{table}
+
 
 Результат хранится в ветке \texttt{lab-\LabNumber} своего форка:
 \url{\RepositoryURL}.
 
 \chapter{Ход выполнения}
-\section{Подготовка окружения}
+\section{Запуск контейнера с именованным volume}
 
-Опишите использованные программы и их версии. Ниже показано оформление
-команд, а не готовый результат; документация Docker приведена как пример
-источника~\cite{docker-docs}.
+Создаем том и проверяем его созданием следующими командами. (рисунок \ref{fig:vol})
 
 \begin{code}
-# Замените на команды и результаты своего этапа.
-docker version
-docker ps -a
+docker volume create manuk-pgdata
+docker volume ls | grep manuk-pgdata
+docker volume inspect manuk-pgdata
 \end{code}
 
-\section{Выполнение и проверка этапов}
+\reportscreenshot{pic/vol.png}{Терминальный вывод}{fig:vol}
 
-Для каждого этапа приведите действие, наблюдаемый результат и объяснение.
-На рисунке~\ref{fig:proof} показано место для собственного скриншота;
-рамка не является доказательством выполнения работы.
+Запускаем PostrgesSql и проверяем статус (рисунок \ref{fig:status}).
 
-% Добавьте свой файл step-01.png рядом с main.tex или замените путь.
-% Пока файла нет, команда выводит рамку, но сборка продолжает работать.
-\reportscreenshot{step-01.png}{Результат проверки этапа}{fig:proof}
+\begin{code}
+docker run -d \
+--name manuk-postgres \
+-e POSTGRES_USER=user_25 \
+-e POSTGRES_PASSWORD=pgpass_25 \
+-e POSTGRES_DB=assistant_25 \
+-v manuk-pgdata:/var/lib/postgresql/data \
+-p 5455:5432 \
+postgres:15
 
-Добавьте разделы по заданию своей лабораторной. Для ЛР №1 включите
-таблицу состояний контейнера и остальные обязательные артефакты;
-не считайте перечень примеров в этом макете полным заданием.
+docker ps --filter "name=manuk-postgres" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+\end{code}
+
+\reportscreenshot{pic/status.png}{Терминальный вывод}{fig:status}
+
+В ЛР2 уже собирали образ v3, поэтому пересобирать его не нужно. 
+
+Запускаем ассистента и подключаем к базе данных.
+
+\begin{code}
+docker run -d \
+  --name manuk-assistant \
+  -p 8025:8025 \
+  -e PORT=8025 \
+  -e APP_OWNER=manuk \
+  -e APP_SECRET=secret25manuk \
+  --add-host=host.docker.internal:host-gateway \
+  -e DATABASE_URL="postgresql://user_25:pgpass_25@host.docker.internal:5455/assistant_25" \
+  manuk-assistant:v3
+\end{code}
+
+Проверим работоспособность. Результаты работы команд представлены на рисунке \ref{fig:1}.
+
+\begin{code}
+curl http://localhost:8025/
+curl http://localhost:8025/health
+curl -X POST http://localhost:8025/notes -H "Content-Type: application/json" -d '{"text": "ЛР3: данные в БД"}'
+curl http://localhost:8025/notes
+\end{code}
+
+\reportscreenshot{pic/status.png}{Терминальный вывод}{fig:1}
+
 
 \section{Ошибки и анализ результатов}
 
-Если возникала ошибка, опишите причину, выполненную проверку и исправление.
-Не публикуйте настоящие пароли, токены и приватные ключи; в скриншотах
-оставляйте требуемые заданием логин, хост и время, скрывая реальные секреты.
+Тк в сборке образа брали переменную PORT для подстановки со значением 5455. Приложение слушает порт 5455 внутри контейнера, а наружу проброшен 8025. Для исправления при сборке контейнера переопределим значение переменной -e PORT=8025.
+
+\reportscreenshot{pic/e1.png}{Терминальный вывод}{fig:e1}
+
 
 \reportelement{Заключение}
 
