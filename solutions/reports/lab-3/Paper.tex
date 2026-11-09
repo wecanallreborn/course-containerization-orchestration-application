@@ -77,14 +77,39 @@ curl -X POST http://localhost:8025/notes -H "Content-Type: application/json" -d 
 curl http://localhost:8025/notes
 \end{code}
 
-\reportscreenshot{pic/status.png}{Терминальный вывод}{fig:1}
+\reportscreenshot{pic/1.png}{Терминальный вывод}{fig:1}
+\section{Тест персистентности: пересоздание контейнера}
+Удаляем контейнер с ассистентом
 
+\begin{code}
+docker stop manuk-assistant
+docker rm manuk-assistant
+\end{code}
+
+Пересоздаем контейнер ассистента и проверяем сохранение данных (рисунок \ref{fig:notes})
+
+\begin{code}
+docker run -d \
+--name manuk-assistant \
+-p 8025:8025 \
+-e APP_OWNER=manuk \
+-e APP_SECRET=secret25manuk \
+-e PORT=8025 \
+--add-host=host.docker.internal:host-gateway \
+-e DATABASE_URL="postgresql://user_25:pgpass_25@host.docker.internal:5455/assistant_25" \
+manuk-assistant:v3
+curl http://localhost:8025/notes
+\end{code}
+
+\reportscreenshot{pic/notes.png}{Терминальный вывод}{fig:notes}
 
 \section{Ошибки и анализ результатов}
 
 Тк в сборке образа брали переменную PORT для подстановки со значением 5455. Приложение слушает порт 5455 внутри контейнера, а наружу проброшен 8025. Для исправления при сборке контейнера переопределим значение переменной -e PORT=8025.
 
 \reportscreenshot{pic/e1.png}{Терминальный вывод}{fig:e1}
+
+
 
 
 \reportelement{Заключение}
