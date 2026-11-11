@@ -105,6 +105,34 @@ curl http://localhost:8025/notes
 
 \reportscreenshot{pic/2.png}{Терминальный вывод}{fig:2}
 
+\section{Bind mount для конфигурации}
+
+Изменили конфигурационный файл приложения. Собираем контейнер с bind mount.
+
+\begin{code}
+docker run -d \
+  --name manuk-assistant-config \
+  -p 8025:8025 \
+  -e PORT=8025 \
+  -e APP_OWNER=manuk \
+  -e APP_SECRET=secret25manuk \
+  --add-host=host.docker.internal:host-gateway \
+  -e DATABASE_URL="postgresql://user_25:pgpass_25@host.docker.internal:5455/assistant_25" \
+  -v $(pwd)/config:/app/config:ro \
+  manuk-assistant:v3
+\end{code}
+
+Проверили доступ к конфигурации \ref{fig:3}.
+
+\begin{code}
+docker exec -it manuk-assistant-config sh
+cat /app/config/app.conf
+\end{code}
+
+\reportscreenshot{pic/3.png}{Терминальный вывод}{fig:3}
+
+Bind mount позволяет менять конфигурацию без пересборки образа.  
+
 \section{Ошибки и анализ результатов}
 
 Тк в сборке образа брали переменную PORT для подстановки со значением 5455. Приложение слушает порт 5455 внутри контейнера, а наружу проброшен 8025. Для исправления при сборке контейнера переопределим значение переменной -e PORT=8025.
