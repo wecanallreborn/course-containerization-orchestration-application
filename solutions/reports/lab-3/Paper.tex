@@ -63,7 +63,6 @@ docker run -d \
   -e PORT=8025 \
   -e APP_OWNER=manuk \
   -e APP_SECRET=secret25manuk \
-  --add-host=host.docker.internal:host-gateway \
   -e DATABASE_URL="postgresql://user_25:pgpass_25@host.docker.internal:5455/assistant_25" \
   manuk-assistant:v3
 \end{code}
@@ -95,7 +94,6 @@ docker run -d \
 -e APP_OWNER=manuk \
 -e APP_SECRET=secret25manuk \
 -e PORT=8025 \
---add-host=host.docker.internal:host-gateway \
 -e DATABASE_URL="postgresql://user_25:pgpass_25@host.docker.internal:5455/assistant_25" \
 manuk-assistant:v3
 curl http://localhost:8025/notes
