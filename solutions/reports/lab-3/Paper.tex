@@ -133,6 +133,63 @@ cat /app/config/app.conf
 
 Bind mount позволяет менять конфигурацию без пересборки образа.  
 
+\section{Пользовательские сети для изоляции}
+
+\begin{code}
+docker network create manuk-backend
+\end{code}
+
+ Пересоздаем контейнеры в пользовательской сети.
+
+ \begin{code}
+docker stop manuk-postgres manuk-assistant-config 2>/dev/null
+docker rm manuk-postgres manuk-assistant-config 2>/dev/null
+
+docker run -d \
+  --name manuk-postgres \
+  --network manuk-backend \
+  -e POSTGRES_USER=user_25 \
+  -e POSTGRES_PASSWORD=pgpass_25 \
+  -e POSTGRES_DB=assistant_25 \
+  -v manuk-pgdata:/var/lib/postgresql/data \
+  postgres:15
+
+  docker run -d \
+  --name manuk-assistant \
+  --network manuk-backend \
+  -p 8025:8025 \
+  -e PORT=8025 \
+  -e APP_OWNER=manuk \
+  -e APP_SECRET=secret25manuk \
+  -e DATABASE_URL="postgresql://user_25:pgpass_25@manuk-postgres:5432/assistant_25" \
+  -v $(pwd)/config:/app/config:ro \
+  manuk-assistant:v3
+ \end{code}
+
+ Проверяем связность контейнеров. (рисунок \ref{fig:4})
+
+ \begin{code}
+curl http://localhost:8025/health
+curl -X POST http://localhost:8025/notes \
+-H "Content-Type: application/json" \
+-d '{"text": "ЛР3: сеть работает!"}'
+curl http://localhost:8025/notes
+ \end{code}
+
+\reportscreenshot{pic/4.png}{Терминальный вывод}{fig:4}
+
+Демонстрация сетевой изоляции. (рисунок \ref{fig:ping})
+\begin{code}
+docker run -it --rm alpine:3.18 ping -c 2 manuk-postgres
+docker run -it --rm --network manuk-backend alpine:3.18 ping -c 2 manuk-postgres
+\end{code}
+
+\reportscreenshot{pic/ping.png}{Терминальный вывод}{fig:ping}
+
+\section{Финальный артефакт}
+
+\reportscreenshot{pic/f.png}{Терминальный вывод}{fig:f}
+
 \section{Ошибки и анализ результатов}
 
 Тк в сборке образа брали переменную PORT для подстановки со значением 5455. Приложение слушает порт 5455 внутри контейнера, а наружу проброшен 8025. Для исправления при сборке контейнера переопределим значение переменной -e PORT=8025.
