@@ -99,7 +99,36 @@ curl http://localhost:8025/health
 
 \reportscreenshot{pic/1.png}{Терминальный вывод}{fig:1}
 
+\section{Добавление Redis для кэширования погоды}
 
+Добавили сервис Redis в docker-compose.yml и изменили depends on в app. Изменение main.py не требует, так как была загружена посленяя версия из репозитория.
+
+\begin{code}
+  redis:
+    image: redis:7-alpine
+    container_name: manuk-redis
+    ports:
+      - "${REDIS_PORT}:6379"
+    networks:
+      - manuk-backend
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+\end{code}
+
+\section{Запуск и проверка полного стека}
+
+
+
+\reportscreenshot{pic/2.png}{Терминальный вывод}{fig:2}
 
 \reportelement{Заключение}
 
