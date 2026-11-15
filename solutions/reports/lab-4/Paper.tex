@@ -126,9 +126,37 @@ depends_on:
 
 \section{Запуск и проверка полного стека}
 
+Проверяем порядок запуска depends on. (рисунок \ref{fig:log})
 
+\begin{code}
+docker compose ps
+docker compose logs --tail=30
+docker compose logs app | head -5
+\end{code}
 
-\reportscreenshot{pic/2.png}{Терминальный вывод}{fig:2}
+\reportscreenshot{pic/log.png}{Терминальный вывод}{fig:log}
+
+Проверка кэширования представлена на рисунке \ref{fig:cache}.
+
+\begin{code}
+curl http://localhost:8025/weather/Moscow
+curl http://localhost:8025/weather/Moscow
+curl http://localhost:8025/cache/stats
+docker exec manuk-redis redis-cli KEYS "weather:*"
+docker exec manuk-redis redis-cli TTL weather:manuk:moscow
+\end{code}
+
+\reportscreenshot{pic/cache.png}{Терминальный вывод}{fig:cache}
+
+Исследовали сети и тома. (рисунок \ref{fig:3})
+
+\begin{code}
+docker network ls --filter "name=manuk"
+docker network inspect manuk-backend
+docker volume ls --filter "name=manuk"
+\end{code}
+
+\reportscreenshot{pic/3.png}{Терминальный вывод}{fig:3}
 
 \reportelement{Заключение}
 
