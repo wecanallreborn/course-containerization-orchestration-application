@@ -158,6 +158,45 @@ docker volume ls --filter "name=manuk"
 
 \reportscreenshot{pic/3.png}{Терминальный вывод}{fig:3}
 
+\section{Масштабирование сервиса}
+
+Для масштабирования убрали привязку к контейнеру и сделали автоматический выбор порта докером для приложения. Остановили старую и запустили новую версию. (рисунок \ref{fig:3app})
+
+\begin{code}
+docker compose down
+docker compose -f docker-compose.scale.yml up -d --build --scale app=3
+docker compose -f docker-compose.scale.yml ps
+\end{code}
+
+\reportscreenshot{pic/3app.png}{Терминальный вывод}{fig:3app}
+
+Проверили работу новых экземпляров на рисунке \ref{fig:4}
+
+\begin{code}
+docker compose -f docker-compose.scale.yml ps app
+curl http://localhost:58051/health
+curl http://localhost:58052/health
+curl http://localhost:58053/health
+curl http://localhost:58051/weather/London
+curl http://localhost:58052/weather/London
+curl http://localhost:58053/cache/stats
+\end{code}
+
+\reportscreenshot{pic/4.png}{Терминальный вывод}{fig:4}
+
+Возвращаем предыдущую версию.
+
+\begin{code}
+docker compose -f docker-compose.scale.yml down
+docker compose up -d
+\end{code}
+
+\section{Финальный артефакт}
+
+\reportscreenshot{pic/f.png}{Терминальный вывод}{fig:f}
+
+* Кэш пустой, так как после отката версии не было запросов погоды.
+
 \reportelement{Заключение}
 
 Цель работы достигнута: запуск приложения, PostgreSQL и Redis перенесён в Docker Compose и выполнено масштабирование. Стек из трёх сервисов успешно оркестрируется, приложение стартует только после готовности базы и Redis, кэш погоды работает корректно (первый запрос идёт в API, последующие возвращаются из Redis), а при масштабировании до трёх экземпляров app все они используют общий кэш. Таким образом, показаны основные возможности Docker Compose как инструмента локальной оркестрации контейнеров.
@@ -169,5 +208,3 @@ docker volume ls --filter "name=manuk"
   URL: \url{https://docs.docker.com/}
   (дата обращения: укажите свою дату).
 \end{thebibliography}
-
-
